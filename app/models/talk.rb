@@ -2,6 +2,7 @@ class Talk < ApplicationRecord
   belongs_to :event
   has_many :attendances, dependent: :destroy
   has_many :participants, through: :attendances
+  has_many :feedbacks, dependent: :destroy
 
   validates :title, :description, :speaker, :start_time, :end_time, presence: true
   validate :end_time_after_start_time
