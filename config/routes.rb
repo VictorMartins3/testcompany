@@ -2,11 +2,11 @@ Rails.application.routes.draw do
   resources :participants, only: [ :index, :create ]
   resources :events, only: [ :show, :create ] do
     member do
-      get :feedback_report # add GET /events/:id/feedback_report
+      get :feedback_report
     end
   end
-  resources :talks, only: [ :create ] do # Route to create a talk
-    resources :feedbacks, only: [:create] # add POST /talks/:talk_id/feedbacks
+  resources :talks, only: [ :create ] do
+    resources :feedbacks, only: [ :create ]
   end
   resources :attendances, only: [ :create ]
 

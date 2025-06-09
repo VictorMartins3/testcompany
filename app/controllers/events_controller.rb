@@ -1,5 +1,5 @@
 class EventsController < ApplicationController
-  before_action :set_event, only: [:show, :feedback_report]
+  before_action :set_event, only: [ :show, :feedback_report ]
 
   def show
     render json: @event.as_json(include: :talks)
@@ -7,9 +7,10 @@ class EventsController < ApplicationController
 
   # GET /events/:id/feedback_report
   def feedback_report
-    talks = @event.talks.to_a # Load all the talks
+    talks = @event.talks.to_a
     talk_ids = talks.map(&:id)
 
+    # search all the feedbacks once and group it by talk_id
     feedbacks_by_talk_id = Feedback
       .where(talk_id: talk_ids)
       .select(:id, :talk_id, :rating, :comment)
@@ -18,11 +19,13 @@ class EventsController < ApplicationController
     talk_feedbacks_report = talks.map do |talk|
       current_talk_feedbacks = feedbacks_by_talk_id[talk.id] || []
 
-      average_rating = if current_talk_feedbacks.any?
-                         (current_talk_feedbacks.sum(&:rating).to_f / current_talk_feedbacks.size).round(2)
-                       else
-                         nil
-                       end
+      average_rating =
+      if current_talk_feedbacks.any?
+        (current_talk_feedbacks.sum(&:rating).to_f / current_talk_feedbacks.size).round(2)
+      else
+        nil
+      end
+
       feedback_count = current_talk_feedbacks.size
       comments = current_talk_feedbacks.map(&:comment)
 

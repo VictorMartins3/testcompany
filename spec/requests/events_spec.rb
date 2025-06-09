@@ -110,4 +110,69 @@ RSpec.describe "Events", type: :request do
       end
     end
   end
+
+  describe "GET /events/:id/feedback_report" do
+    let!(:event) { create(:event) }
+    let!(:talk1) { create(:talk, event: event, title: "Talk 1 Title", start_time: event.start_date + 1.hour, end_time: event.start_date + 2.hours) }
+    let!(:talk2) { create(:talk, event: event, title: "Talk 2 Title", start_time: event.start_date + 3.hours, end_time: event.start_date + 4.hours) }
+    let!(:talk_no_feedback) { create(:talk, event: event, title: "Talk No Feedback", start_time: event.start_date + 5.hours, end_time: event.start_date + 6.hours) }
+
+    let!(:participant1) { create(:participant, event: event) }
+    let!(:participant2) { create(:participant, event: event) }
+
+    before do
+      # Attendances
+      create(:attendance, participant: participant1, talk: talk1)
+      create(:attendance, participant: participant2, talk: talk1)
+      create(:attendance, participant: participant1, talk: talk2)
+
+      # Feedbacks for Talk 1
+      create(:feedback, talk: talk1, participant: participant1, rating: 5, comment: "Amazing talk!")
+      create(:feedback, talk: talk1, participant: participant2, rating: 4, comment: "Very good.")
+
+      # Feedback for Talk 2
+      create(:feedback, talk: talk2, participant: participant1, rating: 3, comment: "Okay.")
+
+      get "/events/#{event.id}/feedback_report"
+    end
+
+    it "returns http success" do
+      expect(response).to have_http_status(:success)
+    end
+
+    it "returns the feedback report as JSON" do
+      json_response = JSON.parse(response.body)
+
+      expect(json_response["event_id"]).to eq(event.id)
+      expect(json_response["event_title"]).to eq(event.title)
+
+      talk_feedbacks = json_response["talk_feedbacks"]
+      expect(talk_feedbacks.size).to eq(3) # talk1, talk2, talk_no_feedback
+
+      talk1_report = talk_feedbacks.find { |t| t["talk_id"] == talk1.id }
+      expect(talk1_report["talk_title"]).to eq("Talk 1 Title")
+      expect(talk1_report["average_rating"]).to eq(4.5)
+      expect(talk1_report["feedback_count"]).to eq(2)
+      expect(talk1_report["comments"]).to match_array([ "Amazing talk!", "Very good." ])
+
+      talk2_report = talk_feedbacks.find { |t| t["talk_id"] == talk2.id }
+      expect(talk2_report["talk_title"]).to eq("Talk 2 Title")
+      expect(talk2_report["average_rating"]).to eq(3.0)
+      expect(talk2_report["feedback_count"]).to eq(1)
+      expect(talk2_report["comments"]).to match_array([ "Okay." ])
+
+      talk_no_feedback_report = talk_feedbacks.find { |t| t["talk_id"] == talk_no_feedback.id }
+      expect(talk_no_feedback_report["talk_title"]).to eq("Talk No Feedback")
+      expect(talk_no_feedback_report["average_rating"]).to be_nil
+      expect(talk_no_feedback_report["feedback_count"]).to eq(0)
+      expect(talk_no_feedback_report["comments"]).to be_empty
+    end
+
+    context "when the event does not exist" do
+      it "returns a not found status" do
+        get "/events/9999/feedback_report"
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
 end

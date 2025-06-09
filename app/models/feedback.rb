@@ -11,7 +11,7 @@ class Feedback < ApplicationRecord
   private
 
   def participant_attended_talk
-    return unless participant_id && talk_id # Ensure IDs are present before querying
+    return unless participant_id && talk_id
 
     unless Attendance.exists?(participant_id: participant_id, talk_id: talk_id)
       errors.add(:base, "Participant did not attend this talk, so cannot leave feedback.")

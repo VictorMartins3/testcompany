@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_17_175057) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_08_160701) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -32,6 +32,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_17_175057) do
     t.datetime "end_date"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "feedbacks", force: :cascade do |t|
+    t.text "comment"
+    t.integer "rating"
+    t.bigint "participant_id", null: false
+    t.bigint "talk_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["participant_id", "talk_id"], name: "index_feedbacks_on_participant_id_and_talk_id", unique: true
+    t.index ["participant_id"], name: "index_feedbacks_on_participant_id"
+    t.index ["talk_id"], name: "index_feedbacks_on_talk_id"
   end
 
   create_table "participants", force: :cascade do |t|
@@ -57,6 +69,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_17_175057) do
 
   add_foreign_key "attendances", "participants"
   add_foreign_key "attendances", "talks"
+  add_foreign_key "feedbacks", "participants"
+  add_foreign_key "feedbacks", "talks"
   add_foreign_key "participants", "events"
   add_foreign_key "talks", "events"
 end

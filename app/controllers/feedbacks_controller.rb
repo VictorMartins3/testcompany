@@ -3,7 +3,6 @@ class FeedbacksController < ApplicationController
 
   # POST /talks/:talk_id/feedbacks
   def create
-    # Assuming participant_id is sent in the request body
     @feedback = @talk.feedbacks.new(feedback_params)
 
     if @feedback.save
